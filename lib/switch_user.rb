@@ -3,6 +3,7 @@ if defined?(Rails)
 end
 
 module SwitchUser
+  require 'switch_user/data_source'
   autoload :UserSet, "switch_user/user_set"
   autoload :UserLoader, "switch_user/user_loader"
   autoload :Provider, "switch_user/provider"
@@ -11,6 +12,7 @@ module SwitchUser
 
   class InvalidScope < Exception; end
 
+  mattr_accessor :generate_routes
   mattr_accessor :provider
   mattr_accessor :available_users
   mattr_accessor :available_users_identifiers
@@ -37,9 +39,22 @@ module SwitchUser
     @@guard_class = klass.constantize
   end
 
-  private
+  def self.all_users
+    data_sources.users
+  end
+
+  def self.data_sources
+    sources = available_users.map do |scope, loader|
+      identifier = available_users_identifiers.fetch(scope)
+      name = available_users_names.fetch(scope)
+      DataSource.new(loader, scope, identifier, name)
+    end
+    sources.unshift(GuestDataSource.new("Guest")) if helper_with_guest
+    DataSources.new(sources)
+  end
 
   def self.reset_config
+    self.generate_routes = true
     self.provider = :devise
     self.available_users = { :user => lambda { User.all } }
     self.available_users_identifiers = { :user => :id }

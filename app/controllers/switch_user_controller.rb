@@ -38,11 +38,15 @@ class SwitchUserController < ApplicationController
     if params[:scope_identifier].blank?
       provider.logout_all
     else
-      loader = SwitchUser::UserLoader.prepare(params)
+      record = SwitchUser.data_sources.find_scope_id(params[:scope_identifier])
+      unless record
+        provider.logout_all
+        return
+      end
       if SwitchUser.login_exclusive
-        provider.login_exclusive(loader.user, :scope => loader.scope)
+        provider.login_exclusive(record.user, :scope => record.scope)
       else
-        provider.login_inclusive(loader.user, :scope => loader.scope)
+        provider.login_inclusive(record.user, :scope => record.scope)
       end
     end
   end
