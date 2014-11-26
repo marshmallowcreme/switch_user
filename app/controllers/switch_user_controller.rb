@@ -2,7 +2,8 @@ class SwitchUserController < ApplicationController
   before_filter :developer_modes_only
 
   def set_current_user
-    session[:original_user_id] = current_user.id
+    #session[:original_user_id] = current_user.id
+    session[:original_user_id] = current_admin.id
     handle_request(params)
 
     redirect_to(SwitchUser.redirect_path.call(request, params))
@@ -18,7 +19,8 @@ class SwitchUserController < ApplicationController
   end
 
   def switch_back
-    params[:scope_identifier] = "user_#{session[:original_user_id]}" if session[:original_user_id].present?
+    #params[:scope_identifier] = "user_#{session[:original_user_id]}" if session[:original_user_id].present?
+    params[:scope_identifier] = "admin_#{session[:original_user_id]}" if session[:original_user_id].present?
     session[:original_user_id] = nil
     handle_request(params)
     redirect_to(SwitchUser.switch_back_path.call(request, params))
