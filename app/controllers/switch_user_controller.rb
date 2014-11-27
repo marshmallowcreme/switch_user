@@ -2,7 +2,8 @@ class SwitchUserController < ApplicationController
   before_filter :developer_modes_only
 
   def set_current_user
-    session[:original_user_id] = current_user.id
+    #session[:original_user_id] = current_user.id
+    session[:original_user_id] = current_admin.id
     handle_request(params)
 
     redirect_to(SwitchUser.redirect_path.call(request, params))
@@ -18,7 +19,8 @@ class SwitchUserController < ApplicationController
   end
 
   def switch_back
-    params[:scope_identifier] = "user_#{session[:original_user_id]}" if session[:original_user_id].present?
+    #params[:scope_identifier] = "user_#{session[:original_user_id]}" if session[:original_user_id].present?
+    params[:scope_identifier] = "admin_#{session[:original_user_id]}" if session[:original_user_id].present?
     session[:original_user_id] = nil
     handle_request(params)
     redirect_to(SwitchUser.switch_back_path.call(request, params))
@@ -38,11 +40,15 @@ class SwitchUserController < ApplicationController
     if params[:scope_identifier].blank?
       provider.logout_all
     else
-      loader = SwitchUser::UserLoader.prepare(params)
+      record = SwitchUser.data_sources.find_scope_id(params[:scope_identifier])
+      unless record
+        provider.logout_all
+        return
+      end
       if SwitchUser.login_exclusive
-        provider.login_exclusive(loader.user, :scope => loader.scope)
+        provider.login_exclusive(record.user, :scope => record.scope)
       else
-        provider.login_inclusive(loader.user, :scope => loader.scope)
+        provider.login_inclusive(record.user, :scope => record.scope)
       end
     end
   end

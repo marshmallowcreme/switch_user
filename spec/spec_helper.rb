@@ -1,27 +1,23 @@
+ENV["RAILS_ENV"] = "test"
 require 'support/provider'
 require 'support/application'
 require 'rspec/rails'
 require 'switch_user'
+require 'pry'
+require 'awesome_print'
 
 RSpec.configure do |config|
   config.filter_run :focus => true
   config.run_all_when_everything_filtered = true
-end
-
-class ApplicationController < ActionController::Base
-
+  config.use_transactional_fixtures = true
 end
 
 class TestController
   def session
     @session_hash ||= {}
   end
-end
 
-connection = ActiveRecord::Base.connection
-connection.create_table :users do |t|
-  t.column :email, :string
-end
-
-class User < ActiveRecord::Base
+  def reset_session
+    @session_hash = {}
+  end
 end
